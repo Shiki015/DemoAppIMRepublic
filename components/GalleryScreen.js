@@ -1,16 +1,18 @@
 import React, { Component } from "react";
-import { View, Text, ActivityIndicator, TouchableWithoutFeedback, Dimensions, Modal, StyleSheet, ScrollView } from "react-native";
+import { View, Text, ActivityIndicator, Dimensions, StyleSheet, ScrollView } from "react-native";
+import { connect } from "react-redux";
 import ImageElement from "./ImageElement";
 
 const key = "f8ed956934813bb0dde52eca8defe4a0";
 const secret = "a0f11fd3e748994f";
 const { height } = Dimensions.get("window");
-export default class GalleryScreen extends Component {
+
+class GalleryScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      screenHeight: 0,
       isLoading: true,
+      screenHeight: 0,
       dataSource: null,
     };
   }
@@ -19,13 +21,13 @@ export default class GalleryScreen extends Component {
     fetch(
       "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=" +
         key +
-        "&tags=cats&per_page=20&page=1&format=json&nojsoncallback=1"
+        "&tags=cars&per_page=20&page=1&format=json&nojsoncallback=1"
     )
       .then((response) => response.json())
       .then((responseJson) => {
         this.setState({
-          isLoading: false,
           dataSource: responseJson.photos.photo,
+          isLoading: false,
         });
       })
       .catch((error) => {
@@ -45,7 +47,9 @@ export default class GalleryScreen extends Component {
         </View>
       );
     } else {
+      let counter = 0;
       let pictures = this.state.dataSource.map((pic, key) => {
+        counter++;
         return (
           <View key={key} style={styles.imageWrap}>
             <ImageElement
@@ -56,6 +60,7 @@ export default class GalleryScreen extends Component {
           </View>
         );
       });
+      this.props.nummberOfLoadedPictures(counter);
       const scrollEnabled = this.state.screenHeight > height;
       return (
         <ScrollView
@@ -64,12 +69,27 @@ export default class GalleryScreen extends Component {
           scrollEnabled={scrollEnabled}
           onContentSizeChange={this.onContentSizeChange}
         >
+          <Text>Number of loaded pictures : {this.props.picCount}</Text>
           <View style={styles.container}>{pictures}</View>
         </ScrollView>
       );
     }
   }
 }
+
+function mapStateToProps(state) {
+  return {
+    picCount: state.picCount,
+  };
+}
+
+function mapDispatchToProps(dispatch) {
+  return {
+    nummberOfLoadedPictures: (data) => dispatch({ type: "NUMBER_OF_LOADED_PICTURES", payload: data }),
+  };
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(GalleryScreen);
 
 const styles = StyleSheet.create({
   container: {
@@ -82,7 +102,7 @@ const styles = StyleSheet.create({
     margin: 2,
     marginTop: 10,
     padding: 2,
-    height: Dimensions.get("window").height / 2 - 12,
+    height: Dimensions.get("window").height / 3 - 12,
     width: Dimensions.get("window").width - 4,
     backgroundColor: "#fff",
   },
